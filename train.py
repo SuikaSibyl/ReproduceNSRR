@@ -9,6 +9,7 @@ import model.model as module_arch
 from parse_config import ConfigParser
 from trainer import Trainer
 from utils import prepare_device
+import torch.nn as nn
 
 
 # fix random seeds for reproducibility
@@ -17,6 +18,12 @@ torch.manual_seed(SEED)
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 np.random.seed(SEED)
+
+
+def weight_init(m):
+    if isinstance(m, nn.Conv2d):
+        nn.init.xavier_normal_(m.weight, gain=nn.init.calculate_gain('relu'))
+        nn.init.zeros_(m.bias)
 
 def main(config):
     logger = config.get_logger('train')
@@ -35,7 +42,7 @@ def main(config):
     if len(device_ids) > 1:
         model = torch.nn.DataParallel(model, device_ids=device_ids)
 
-    # get function handles of loss and metrics
+    # get function handles of loss and metricss
     criterion = getattr(module_loss, config['loss'])
     metrics = [getattr(module_metric, met) for met in config['metrics']]
 
@@ -43,6 +50,8 @@ def main(config):
     trainable_params = filter(lambda p: p.requires_grad, model.parameters())
     optimizer = config.init_obj('optimizer', torch.optim, trainable_params)
     lr_scheduler = config.init_obj('lr_scheduler', torch.optim.lr_scheduler, optimizer)
+
+    model.apply(weight_init)
 
     trainer = Trainer(model, criterion, metrics, optimizer,
                       config=config,
@@ -52,7 +61,6 @@ def main(config):
                       lr_scheduler=lr_scheduler)
 
     trainer.train()
-
 
 if __name__ == '__main__':
     args = argparse.ArgumentParser(description='PyTorch Template')

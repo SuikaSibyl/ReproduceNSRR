@@ -1,30 +1,34 @@
 {
-    "name": "Mnist_LeNet",
+    "name": "Super_Sampling",
     "n_gpu": 1,
 
     "arch": {
-        "type": "MnistModel",
+        "type": "SuperSamplingNet",
         "args": {}
     },
     "data_loader": {
-        "type": "MnistDataLoader",
+        "type": "NSRRDataLoader",
         "args":{
-            "data_dir": "data/",
-            "batch_size": 128,
-            "shuffle": true,
+            "root_dir": "data/AnotherScene/",
+            "batch_size": 1,
+            "shuffle": false,
             "validation_split": 0.1,
-            "num_workers": 2
+            "num_workers": 8,
+            "view_dirname": "View/",
+            "depth_dirname": "Depth/",
+            "flow_dirname": "Motion/",
+            "downscale_factor": 2
         }
     },
     "optimizer": {
         "type": "Adam",
         "args":{
-            "lr": 0.001,
+            "lr": 0.0001,
             "weight_decay": 0,
             "amsgrad": true
         }
     },
-    "loss": "nll_loss",
+    "loss": "nsrr_loss",
     "metrics": [
         "accuracy", "top_k_acc"
     ],
@@ -36,7 +40,7 @@
         }
     },
     "trainer": {
-        "epochs": 100,
+        "epochs": 500,
 
         "save_dir": "saved/",
         "save_period": 1,
